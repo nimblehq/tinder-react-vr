@@ -5,14 +5,15 @@
 // Auto-generated content.
 import {VRInstance} from 'react-vr-web';
 import {MouseRayCaster} from 'ovrui';
+import ThreeDOFRayCaster from '../src/rayCaster/threeDOFRayCaster';
 import * as THREE from 'three'
 
 function init(bundle, parent, options) {
   const scene = new THREE.Scene();
   const vr = new VRInstance(bundle, 'TinderReactVR', parent, {
     // Add custom options here
-    raycasters: [new MouseRayCaster()],
-    cursorVisibility: 'auto',
+    raycasters: [new MouseRayCaster(), new ThreeDOFRayCaster(scene)],
+    cursorVisibility: 'visible',
     scene: scene,
     ...options,
   });
