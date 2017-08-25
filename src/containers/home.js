@@ -9,8 +9,10 @@ export default class HomeContainer extends React.Component {
       tinderToken: null,
       users: [],
       currentIndex: 0,
+      currentImageIndex: 0,
       currentUser: null,
-      liked: false
+      liked: false,
+      btnLike: asset('like.png')
     }
   }
 
@@ -31,33 +33,53 @@ export default class HomeContainer extends React.Component {
     return(
       <View>
         <Pano source={[{uri: floor}, {uri: floor}, {uri: floor}, {uri: floor}, {uri: floor}, {uri: floor}]}/>
-        <View style={{flex: 1, flexDirection: 'column', transform: [{translate: [-1, 1.5, -6]}]}}>
-          <View style={{flex: 1, flexDirection: 'row'}}>
-            <Image source={{uri: config.proxyUrl + this.state.currentUser.photos[0].url}}
-                   style={{width: 2, height: 2}}/>
+        <View style={{flex: 1, flexDirection: 'column', transform: [{translate: [-1.5, 2, -6]}]}}>
+          <View style={{flex: 1, flexDirection: 'column', alignItems: 'center', backgroundColor: 'white', padding: 0.1, borderRadius: 0.05}}>
+            <View style={{flex: 1, flexDirection: 'column', alignItems: 'center'}}>
+              <View style={{flex: 1, flexDirection: 'row', alignItems: 'center'}}>
+                <VrButton
+                    style={{opacity: this.state.currentImageIndex > 0 ? 1 : 0}}
+                    onClick={()=>this.state.currentImageIndex > 0 ? this._showPreviousImage() : ''}>
+                  <Image source={asset('next.png')}
+                         style={{width: 0.5, height: 0.5, marginRight: 0.2, transform: [{rotate: '180deg'}]}}/>
+                </VrButton>
+                <Image source={{uri: this.state.currentImage}}
+                       style={{width: 2, height: 2, borderRadius: 0.1}}/>
+                <VrButton
+                    style={{opacity: this.state.currentImageIndex + 1 < this.state.currentUser.photos.length ? 1 : 0}}
+                    onClick={() =>this.state.currentImageIndex + 1 < this.state.currentUser.photos.length ? this._showNextImage() : ''}>
+                  <Image source={asset('next.png')}
+                         style={{width: 0.5, height: 0.5, marginLeft: 0.2}}/>
+                </VrButton>
+              </View>
 
-            <Text style={{fontSize: 1, color: 'blue'}}>
-              {this.state.currentUser.name}
-            </Text>
-          </View>
+              <Text style={{fontSize: 0.7, color: 'blue'}}>
+                {this.state.currentUser.name}
+              </Text>
+            </View>
 
-          <View style={{marginTop: 0.1, flexDirection: 'row'}}>
-            {
-              this.state.liked ? (
+            <View style={{marginTop: 0.1, flexDirection: 'row'}}>
+              {
+                this.state.liked ? (
                   <Image source={asset('liked.png')}
                          style={{width: 0.5, height: 0.5}}/>
-              ) : (
-                  <VrButton onClick={()=>this._onLikeClicked()}>
-                    <Image source={asset('like.png')}
+                ) : (
+                  <VrButton
+                    onClick={()=>this._onLikeClicked()}
+                    onEnter={() => this.setState({btnLike: asset('liked.png')})}
+                    onExit={() => this.setState({btnLike: asset('like.png')})}
+                  >
+                    <Image source={this.state.btnLike}
                            style={{width: 0.5, height: 0.5}}/>
                   </VrButton>
-              )
-            }
+                )
+              }
 
-            <VrButton onClick={()=>this._onNextClicked()}>
-              <Image source={asset('next.png')}
-                     style={{width: 0.5, height: 0.5, marginLeft: 1}}/>
-            </VrButton>
+              <VrButton onClick={()=>this._onNextClicked()}>
+                <Image source={asset('next.png')}
+                       style={{width: 0.5, height: 0.5, marginLeft: 1}}/>
+              </VrButton>
+            </View>
           </View>
         </View>
       </View>
@@ -100,7 +122,7 @@ export default class HomeContainer extends React.Component {
     .then((response) => response.json())
     .then((responseJson) => {
       let users = responseJson.results;
-      this.setState({users: users, currentUser: users[this.state.currentIndex]});
+      this.setState({users: users, currentUser: users[this.state.currentIndex], currentImageIndex: 0, currentImage: config.proxyUrl + users[this.state.currentIndex].photos[0].url});
     })
     .catch((error) => {
       console.warn(error);
@@ -112,15 +134,30 @@ export default class HomeContainer extends React.Component {
     this.setState({liked: false});
     if (nextIndex < this.state.users.length) {
       let user = this.state.users[nextIndex];
-      this.setState({currentIndex: nextIndex, currentUser: user})
+      this.setState({currentIndex: nextIndex, currentUser: user, currentImageIndex: 0, currentImage: config.proxyUrl + user.photos[0].url});
     } else {
       this.setState({currentIndex: 0});
       this._getUsers();
     }
   }
 
+  _showNextImage() {
+    let imageIndex = this.state.currentImageIndex + 1;
+    this._setImage(imageIndex);
+  }
+
+  _showPreviousImage() {
+    let imageIndex = this.state.currentImageIndex - 1;
+    this._setImage(imageIndex);
+  }
+
+  _setImage(imageIndex) {
+    this.setState({currentImageIndex: imageIndex, currentImage: config.proxyUrl + this.state.currentUser.photos[imageIndex].url});
+  }
+
   _onLikeClicked() {
     let likeUrl = 'https://api.gotinder.com/like/' + this.state.currentUser._id;
+    this.setState({liked: true});
 
     return fetch(config.proxyUrl + likeUrl, {
       method: 'GET',
